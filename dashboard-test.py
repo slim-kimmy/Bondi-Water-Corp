@@ -67,6 +67,7 @@ df = st.session_state.df
 
 
 with st.sidebar:
+    '''
     # Dashboard title
     st.markdown("""
     <style>
@@ -79,6 +80,7 @@ with st.sidebar:
         color: #ed0919; 
     </style>
     """, unsafe_allow_html=True)
+    '''
     st.markdown('<p class="big-font">Water Consumption Dashboard</p>', unsafe_allow_html=True)
 
     # Address Filter Dropdown
@@ -124,7 +126,7 @@ with st.sidebar:
     # KPI's
 mean, median, df2 = get_60_day_monday_average(sensor_list)
 
-
+'''
 st.markdown(
     """
 <style>
@@ -140,7 +142,7 @@ div[data-testid="stMarkdownContainer"] > p {
 """,
     unsafe_allow_html=True,
 )
-
+'''
 
 kpi1, kpi2, kpi3 = st.columns(3)
 kpi1.metric(
