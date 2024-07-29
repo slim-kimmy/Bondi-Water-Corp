@@ -7,4 +7,11 @@ Here is the current situtation in regards to building the database:
       2. for 30 days of minute resolution data per sensor it will be 1441959 byes ot 1.44mb (this is our initial load)
       3. In order to save all of your timeseries data at the MINUTE resolution we will first have to initially load 207 devices * 1.44mb  = 298.08mb of time series data
   ##TOMBSTONE DATA
-    
+
+
+@@@ TODO @@@
+Incorporate tombstone data into the initial location dataframe 
+Add a parent ID dropdown to further sort down properties
+Clean up the alertlabAPI.py file 
+Fix up the credentials functions 
+Finish the constraints table above
