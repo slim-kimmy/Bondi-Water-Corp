@@ -5,7 +5,6 @@ import pandas as pd
 from datetime import datetime, timedelta
 import streamlit as st
 import altair as alt
-import plotly.express as px
 import alertlabAPI as al
 import streamlit_toggle as tog
 
