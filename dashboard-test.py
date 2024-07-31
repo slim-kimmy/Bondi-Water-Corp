@@ -24,24 +24,48 @@ def get_60_day_monday_average(sensor_list):
         cumulative_sixty_day_consumption = al.sum_columns(sixty_day_dataframes, ['series'])
         # Convert the datetime strings into Datetime objects and adjust for UTC to EDT
         cumulative_sixty_day_consumption['Datetime'] = pd.to_datetime(cumulative_sixty_day_consumption['Datetime'])
-        # Filter the data for Datetime values that are Mondays at 3AM EDT
-        filtered_data = cumulative_sixty_day_consumption[(cumulative_sixty_day_consumption['Datetime'].dt.dayofweek == 0) & (cumulative_sixty_day_consumption['Datetime'].dt.hour == 3)]
+        # Filter the data for Datetime values that are Mondays between 1AM and 5AM EDT
+        filtered_data = cumulative_sixty_day_consumption[(cumulative_sixty_day_consumption['Datetime'].dt.dayofweek == 0) &
+                                                         (cumulative_sixty_day_consumption['Datetime'].dt.hour >= 1) &
+                                                         (cumulative_sixty_day_consumption['Datetime'].dt.hour <= 5)]
         # Calculate the mean and median of the series column for the filtered data
         mean_series = filtered_data['series'].mean()
         median_series = filtered_data['series'].median()
         return mean_series, median_series, cumulative_sixty_day_consumption
-    
-def get_this_weeks_average():
-    pass
 
+    
+def get_this_weeks_average(sensor_list):
+    if len(sensor_list) > 0:
+        # Get today's date and convert to unix time
+        today = datetime.now()
+        today_unix = int(time.mktime(today.timetuple()))
+        # Get 7 days ago date and convert to unix time
+        seven_days_ago = today - timedelta(days=7)
+        seven_days_ago_unix = int(time.mktime(seven_days_ago.timetuple()))
+        # Query for all the sensors at the location
+        seven_day_dataframes = al.get_list_timeseries(sensor_list, start_date=seven_days_ago_unix, end_date=today_unix, rate="h", series="water")
+        # Sum the dataframes
+        cumulative_seven_day_consumption = al.sum_columns(seven_day_dataframes, ['series'])
+        # Convert the datetime strings into Datetime objects and adjust for UTC to EDT
+        cumulative_seven_day_consumption['Datetime'] = pd.to_datetime(cumulative_seven_day_consumption['Datetime'])
+        # Calculate the mean of the series column for the past week
+        mean_series = cumulative_seven_day_consumption['series'].mean()
+        return mean_series, cumulative_seven_day_consumption
+
+    
 def make_timeseries_chart(queried_sensors, start_date, end_date, rate, series):
     if len(queried_sensors) != 0:
         time_series_data = al.get_list_timeseries(queried_sensors, start_date=start_date_unix, end_date=end_date_unix, rate=rate, series=series)
         # Sum the displayed dataframes
         cumulative_timeseries_data = al.sum_columns(time_series_data, ['series'])
+        # Casting data type for time as string
+        #cumulative_timeseries_data["series"] = cumulative_timeseries_data["Datetime"].astype(str)
+        cumulative_timeseries_data['series'] = cumulative_timeseries_data['series'].apply(lambda x: round(x))
         # Generate the chart
         st.bar_chart(cumulative_timeseries_data, x="Datetime", y="series", x_label="Date", y_label="Water Consumption", height=800)
         st.write(cumulative_timeseries_data)
+
+
 
 def get_location_dataframes(location_id):
     pass
@@ -58,12 +82,26 @@ alt.themes.enable("dark")
 # Read in existing CSV, these will be swapped every refresh
 if 'df' not in st.session_state:
     initial_load_dataframe = al.main()
+    #######
+    #column_ids =
+    #_id
+    #postalCode
+    #commercialPropertyType
+    #numberSuites
+    #unoccupiedSuites
+    #smartMeter
+    #numOccupants
+    #age
+    #size
+    #numberFloors
+    #initial_load_tombstone_dataframe = pd.read_csv("tombstone-data.csv")
+    #######
     # Creating unique ID's from a concatenation of address and name values
     initial_load_dataframe["unique"] = initial_load_dataframe["address"] + " " + initial_load_dataframe["name"]
     # Stashing in session
     st.session_state.df = initial_load_dataframe
 df = st.session_state.df
-
+mean_count = df['sensors'].apply(len).mean()
 
 
 with st.sidebar:
@@ -123,8 +161,8 @@ with st.sidebar:
 
 # Displays
     # KPI's
-mean, median, df2 = get_60_day_monday_average(sensor_list)
-
+mean, median, cumulative_sixty_day_consumption = get_60_day_monday_average(sensor_list)
+seven_day_mean, cumulative_seven_day_consumption  = get_this_weeks_average(sensor_list)
 
 st.markdown(
     """
@@ -145,23 +183,23 @@ div[data-testid="stMarkdownContainer"] > p {
 
 kpi1, kpi2, kpi3 = st.columns(3)
 kpi1.metric(
-    label="Average Litres",
+    label="60 Day Monday 1-5AM (Avg)",
     value=round(mean)
 )
 kpi2.metric(
-    label="Median Litres",
+    label="60 Day Monday 1-5AM (Med)",
     value=round(median)
 )
 kpi3.metric(
-    label="Past Weeks Avg",
-    value = 999)
+    label="Past Weeks Avg (l/h)",
+    value = round(seven_day_mean)
+)
 
 
     # Timeseries chart
 if submitted == True:
     # Function to make timeseries chart  
     make_timeseries_chart(queried_sensors, start_date_unix, end_date_unix, rate, series)
-
 
 
 
