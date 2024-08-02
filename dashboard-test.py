@@ -25,7 +25,7 @@ def get_60_day_monday_average(sensor_list):
         # Convert the datetime strings into Datetime objects and adjust for UTC to EDT
         cumulative_sixty_day_consumption['Datetime'] = pd.to_datetime(cumulative_sixty_day_consumption['Datetime'])
         # Filter the data for Datetime values that are Mondays between 1AM and 5AM EDT
-        filtered_data = cumulative_sixty_day_consumption[(cumulative_sixty_day_consumption['Datetime'].dt.dayofweek == 0) &
+        filtered_data = cumulative_sixty_day_consumption[#(cumulative_sixty_day_consumption['Datetime'].dt.dayofweek == 0) &
                                                          (cumulative_sixty_day_consumption['Datetime'].dt.hour >= 1) &
                                                          (cumulative_sixty_day_consumption['Datetime'].dt.hour <= 5)]
         # Calculate the mean and median of the series column for the filtered data
@@ -183,11 +183,11 @@ div[data-testid="stMarkdownContainer"] > p {
 
 kpi1, kpi2, kpi3 = st.columns(3)
 kpi1.metric(
-    label="60 Day Monday 1-5AM (Avg)",
+    label="60 Day 1-5AM (Avg)",
     value=round(mean)
 )
 kpi2.metric(
-    label="60 Day Monday 1-5AM (Med)",
+    label="60 Day 1-5AM (Med)",
     value=round(median)
 )
 kpi3.metric(
