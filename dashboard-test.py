@@ -95,7 +95,7 @@ if 'df' not in st.session_state:
     #age
     #size
     #numberFloors
-    initial_load_tombstone_dataframe = pd.read_csv("tombstone-data.csv")
+    #initial_load_tombstone_dataframe = pd.read_csv("tombstone-data.csv")
     authorization_header = at.generate_new_authorization_header()
     initial_parent_id_dataframe = at.get_parents_ids(initial_load_dataframe, authorization_header)
     #######
