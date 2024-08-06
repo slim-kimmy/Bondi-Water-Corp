@@ -5,6 +5,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import streamlit as st
 import altair as alt
+import apitesting as at
 import alertlabAPI as al
 import streamlit_toggle as tog
 
@@ -94,15 +95,17 @@ if 'df' not in st.session_state:
     #age
     #size
     #numberFloors
-    #initial_load_tombstone_dataframe = pd.read_csv("tombstone-data.csv")
+    initial_load_tombstone_dataframe = pd.read_csv("tombstone-data.csv")
+    authorization_header = at.generate_new_authorization_header()
+    initial_parent_id_dataframe = at.get_parents_ids(initial_load_dataframe, authorization_header)
     #######
     # Creating unique ID's from a concatenation of address and name values
     initial_load_dataframe["unique"] = initial_load_dataframe["address"] + " " + initial_load_dataframe["name"]
+    # Merge the parent ID dataframe with the initial load dataframe
+    merged_df = pd.merge(initial_load_dataframe, initial_parent_id_dataframe, on='_id')
     # Stashing in session
-    st.session_state.df = initial_load_dataframe
+    st.session_state.df = merged_df
 df = st.session_state.df
-mean_count = df['sensors'].apply(len).mean()
-
 
 with st.sidebar:
     # Dashboard title
@@ -119,14 +122,18 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
     st.markdown('<p class="big-font">Water Consumption Dashboard</p>', unsafe_allow_html=True)
-
+    # Parent Organization filter
+    parent_list = sorted(list(df.parentNames.unique())[::-1])
+    selected_address = st.selectbox('Select Organization:', parent_list)
+    df_selected_parent = df[df.parentNames == selected_address]
     # Address Filter Dropdown
-    address_list = list(df.unique.unique())[::-1]
+    address_list = list(df_selected_parent.name.unique())[::-1]
     selected_address = st.selectbox('Select Property:', address_list)
-    df_selected_address = df[df.unique == selected_address]
+    df_selected_address = df[df.name == selected_address]
     st.write(df_selected_address)
     # Calendar widget 
-    start_date = st.date_input("Start Date")
+    default_date_last_week = datetime.today() - timedelta(days=7)
+    start_date = st.date_input("Start Date", default_date_last_week)
     end_date = st.date_input("End Date")
     start_date_unix = str(datetime.strptime(str(start_date), "%Y-%m-%d").timestamp())
     end_date_unix = str(datetime.strptime(str(end_date), "%Y-%m-%d").timestamp())
@@ -157,7 +164,8 @@ with st.sidebar:
             queried_sensors.append(sensor_id)        
     # Initiate Query and get list of dataframes from selected sensors
     submitted = st.button("Query")
-    
+
+
 # Displays
     # KPI's
 mean, median, cumulative_sixty_day_consumption = get_60_day_monday_average(sensor_list)
@@ -199,3 +207,6 @@ kpi3.metric(
 if submitted == True:
     # Function to make timeseries chart  
     make_timeseries_chart(queried_sensors, start_date_unix, end_date_unix, rate, series)
+
+
+
