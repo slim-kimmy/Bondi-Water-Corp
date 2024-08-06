@@ -157,7 +157,6 @@ with st.sidebar:
             queried_sensors.append(sensor_id)        
     # Initiate Query and get list of dataframes from selected sensors
     submitted = st.button("Query")
-    test_button = st.button("Do not press this button")
     
 # Displays
     # KPI's
@@ -200,7 +199,3 @@ kpi3.metric(
 if submitted == True:
     # Function to make timeseries chart  
     make_timeseries_chart(queried_sensors, start_date_unix, end_date_unix, rate, series)
-if test_button == True:
-    df.to_csv("github-test.csv", index=False)
-
-
