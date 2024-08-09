@@ -102,9 +102,6 @@ def get_timeseries(sensor_id="323747143531313928002000", start_date="1720119038"
     }
     response = requests.get(test_url, headers=test_headers)
     response_json = response.json()
-    print("GETTING DATA")
-    print(response_json)
-    print(type(response_json))
     values = response_json['value']
     # Create a DataFrame
     df = pd.DataFrame(values, columns=['time', 'series'])
