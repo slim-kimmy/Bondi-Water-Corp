@@ -90,8 +90,8 @@ def make_timeseries_chart(queried_sensors, start_date, end_date, rate, series):
             lambda x: median_value if x < lower_bound or x > upper_bound else x
         )
         # Generate the chart
-        fig = px.bar(cumulative_timeseries_data, x="Datetime", y="series", height=500, width=1200)
-        fig2 = px.scatter(cumulative_timeseries_data, x="Datetime", y="normalized", height=800, width=1200, trendline="ols", trendline_scope="overall", trendline_color_override="#d52b1e")
+        fig = px.bar(cumulative_timeseries_data, x="Datetime", y="series", height=500)
+        fig2 = px.scatter(cumulative_timeseries_data, x="Datetime", y="normalized", height=800, trendline="ols", trendline_scope="overall", trendline_color_override="#d52b1e")
         fig2.update_layout(showlegend=False)
         st.plotly_chart(fig, theme="streamlit")
         st.plotly_chart(fig2, theme="streamlit")
