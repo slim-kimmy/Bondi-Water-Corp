@@ -54,18 +54,6 @@ def get_this_weeks_average(sensor_list):
         mean_series = cumulative_seven_day_consumption['series'].mean()
         return mean_series, cumulative_seven_day_consumption
 
-    
-def make_timeseries_chart(queried_sensors, start_date, end_date, rate, series):
-    if len(queried_sensors) != 0:
-        time_series_data = al.get_list_timeseries(queried_sensors, start_date=start_date_unix, end_date=end_date_unix, rate=rate, series=series)
-        # Sum the displayed dataframes
-        cumulative_timeseries_data = al.sum_columns(time_series_data, ['series'])
-        # Casting data type for time as string
-        #cumulative_timeseries_data["series"] = cumulative_timeseries_data["Datetime"].astype(str)
-        cumulative_timeseries_data['series'] = cumulative_timeseries_data['series'].apply(lambda x: round(x))
-        # Generate the chart
-        st.bar_chart(cumulative_timeseries_data, x="Datetime", y="series", x_label="Datetime", y_label="Water Consumption", height=800)
-        st.write(cumulative_timeseries_data)
 
 def make_timeseries_chart(queried_sensors, start_date, end_date, rate, series):
     if len(queried_sensors) != 0:
@@ -92,7 +80,9 @@ def make_timeseries_chart(queried_sensors, start_date, end_date, rate, series):
         # Generate the chart
         fig = px.bar(cumulative_timeseries_data, x="Datetime", y="series", height=500)
         fig2 = px.scatter(cumulative_timeseries_data, x="Datetime", y="normalized", height=500, trendline="ols", trendline_scope="overall", trendline_color_override="#d52b1e")
+        fig.update_layout(font=dict(18))
         fig2.update_layout(showlegend=False)
+        fig2.update_layout(font=dict(18))
         st.plotly_chart(fig, theme="streamlit")
         st.plotly_chart(fig2, theme="streamlit")
         st.write(cumulative_timeseries_data)
