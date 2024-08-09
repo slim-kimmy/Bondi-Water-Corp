@@ -107,21 +107,15 @@ Inputs: None
 Outputs: Dataframe
 Description: Using the non-public API this fucntion will use the dataframe from the alertlabs-api.py main() function to lookup up all non-public info based on location ID 
 '''
-def get_tombstone_data():
+def get_tombstone_data(df, authorization_header):
     #start = time.time()
     column_ids = ['_id', 'postalCode', 'commercialPropertyType', 'numberSuites', 
-              'unoccupiedSuites', 'smartMeter', 'numOccupants', 'age', 'size']
+              'unoccupiedSuites', 'smartMeter', 'numOccupants', 'age', 'size', 'numberFloors']
     tombstone_list = []
-    df = pd.read_csv("df-locations.csv")
     location_list = df["_id"]
-    authorization_header=generate_new_authorization_header()
     for location in location_list:
         details = get_property_details(location, authorization_header)
         tombstone_list.append(details['location'])
-    #stop = time.time()
-    #time_elapsed = stop - start
-    #print(f"Time elapsed: {time_elapsed}")
-    #print(tombstone_list)
     cleaned_data = [
         {k: (v if v is not None else '') for k, v in d.items()}
         for d in tombstone_list if isinstance(d, dict)
