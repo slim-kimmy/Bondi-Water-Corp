@@ -1,6 +1,5 @@
 import requests
 import json
-
 import pandas as pd
 from datetime import datetime, timedelta
 import urllib.parse as urlparse
@@ -17,6 +16,8 @@ def read_credentials(file_path="credentials.txt"):
             elif line.startswith('password:'):
                 password = line.split('password:')[1].strip()
     return username, password
+
+
 
 def get_token(username, password):
     url = 'https://www.alertlabsdashboard.com/api/v3/login'
@@ -41,6 +42,7 @@ def get_token(username, password):
     return token
 
 
+
 def check_credential(file_path="token.txt"):
     # Read the content of the file
     with open(file_path, 'r') as file:
@@ -51,12 +53,9 @@ def check_credential(file_path="token.txt"):
     token = token_part.split('token: ')[1].strip()
     date_str = date_part.strip()
     file_date = datetime.strptime(date_str, "%m/%d/%Y")
-
-    
     # Calculate the difference between today's date and the file date
     today = datetime.now()
     date_difference = today - file_date
-    
     # If the date is more than 29 days ago, get a new token and update the file
     if date_difference.days > 29:
         username, password = read_credentials()
@@ -71,7 +70,6 @@ def check_credential(file_path="token.txt"):
 
 
 
-
 def locations(token='$2b$08$7kPxAMomf57uw1hQWXY7je3h5pAGSilfGe.MRj4o7drjgY9Vj6BJ2'):
         # Get all locations test
     test_url = 'https://www.alertlabsdashboard.com/api/v3/dataModel/read/allLocations'
@@ -82,6 +80,8 @@ def locations(token='$2b$08$7kPxAMomf57uw1hQWXY7je3h5pAGSilfGe.MRj4o7drjgY9Vj6BJ
     response_json = response.json()
     return response_json["dataModel"]
 
+
+
 def get_ongoing(location_id, token='$2b$08$7kPxAMomf57uw1hQWXY7je3h5pAGSilfGe.MRj4o7drjgY9Vj6BJ2'):
             # Get all locations test
     test_url = f'https://www.alertlabsdashboard.com/api/v3/dataModel/read/allSensorEventsAtLocation?locationID={location_id}'
@@ -91,6 +91,7 @@ def get_ongoing(location_id, token='$2b$08$7kPxAMomf57uw1hQWXY7je3h5pAGSilfGe.MR
     response = requests.get(test_url, headers=test_headers)
     response_json = response.json()
     return response_json["dataModel"]
+
 
 
 #Test 313747173737333821002b00
@@ -110,6 +111,8 @@ def get_timeseries(sensor_id="323747143531313928002000", start_date="1720119038"
     df['Datetime'] = pd.to_datetime(df['time'], unit='s') - timedelta(hours=4)
     return df
 
+
+
 def get_list_timeseries(sensor_list, start_date="1720119038", end_date="1720205438", rate="h", series="water"):
     time_series_list = []
     for sensor in sensor_list:
@@ -118,8 +121,11 @@ def get_list_timeseries(sensor_list, start_date="1720119038", end_date="17202054
                                              end_date=end_date,
                                              rate=rate
                                             )
-        time_series_list.append(time_series_data)
+        if time_series_data.empty != True:
+            time_series_list.append(time_series_data)
     return time_series_list
+
+
 
 def get_properties_with_sensors(properties, token):
     for place in properties:
@@ -128,12 +134,18 @@ def get_properties_with_sensors(properties, token):
         list_of_sensors = sensors[0]['sensors']
         # Use list comprehension to filter sensors
         sensors_at_location = [sensor["_id"] for sensor in list_of_sensors if sensor['type'] in {"FlowieO", "WaterMeter"}]
+        sensor_names_at_location = [sensor["name"] for sensor in list_of_sensors if sensor['type'] in {"FlowieO", "WaterMeter"}]
         place["sensors"] = sensors_at_location
+        place["sensor names"] = sensor_names_at_location
     return properties
+
+
 
 LOGIN_API = 'https://www.alertlabsdashboard.com/oauth/login?client_id=AlertLabsLogin&state=login&redirect_uri=https://www.alertlabsdashboard.com&response_type=code'
 TOKEN_API = 'https://www.alertlabsdashboard.com/oauth/AlertLabsLogin/tokenExchange'
 COMPARISON_API = 'https://www.alertlabsdashboard.com/api/v2/aggregates/comparison'
+
+
 
 # Handle token exchange token to get new access token
 def generate_new_authorization_header():
@@ -156,6 +168,8 @@ def generate_new_authorization_header():
     secret = json.loads(response.text)
     return secret['access_token']
 
+
+
 # Return false if error, return json if successful
 def getComparisonData(locationIDs):
     locationIDs = json.dumps({
@@ -167,6 +181,8 @@ def getComparisonData(locationIDs):
     if response.status_code != 200:
         return False
     return json.loads(response.text)
+
+
 
 def sum_columns(dataframes, column_names):
     if len(dataframes) > 1:
@@ -181,6 +197,7 @@ def sum_columns(dataframes, column_names):
     elif len(dataframes) == 1:
         return dataframes[0]
     
+
 
 def main():
     token = check_credential()
