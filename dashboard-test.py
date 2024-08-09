@@ -80,7 +80,7 @@ def make_timeseries_chart(queried_sensors, start_date, end_date, rate, series):
         # Generate the chart
         fig = px.bar(cumulative_timeseries_data, x="Datetime", y="series", height=500)
         fig2 = px.scatter(cumulative_timeseries_data, x="Datetime", y="normalized", height=500, trendline="ols", trendline_scope="overall", trendline_color_override="#d52b1e")
-        fig2.update_layout(showlegend=False, font=dict(18))
+        fig2.update_layout(showlegend=False, font=dict(size=18))
         fig2.update_layout(font=dict(size=18))
         st.plotly_chart(fig, theme="streamlit")
         st.plotly_chart(fig2, theme="streamlit")
