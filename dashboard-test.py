@@ -193,7 +193,6 @@ if submitted == True:
     st.session_state.mean = mean
     st.session_state.median = median
     st.session_state.seven_day_mean = seven_day_mean
-    st.session_state.mean_two = mean_two
     st.session_state.suite_mean = (st.session_state.mean/amount_of_suites)
     st.markdown(
         """
