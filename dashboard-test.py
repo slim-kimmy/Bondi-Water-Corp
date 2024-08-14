@@ -30,14 +30,10 @@ def get_60_day_monday_average(sensor_list):
         filtered_data = cumulative_sixty_day_consumption[#(cumulative_sixty_day_consumption['Datetime'].dt.dayofweek == 0) &
                                                          (cumulative_sixty_day_consumption['Datetime'].dt.hour >= 1) &
                                                          (cumulative_sixty_day_consumption['Datetime'].dt.hour <= 5)]
-        filtered_data_2 = cumulative_sixty_day_consumption[#(cumulative_sixty_day_consumption['Datetime'].dt.dayofweek == 0) &
-                                                 (cumulative_sixty_day_consumption['Datetime'].dt.hour >= 6) &
-                                                 (cumulative_sixty_day_consumption['Datetime'].dt.hour <= 24)]
         # Calculate the mean and median of the series column for the filtered data
         mean_series = filtered_data['series'].mean()
         median_series = filtered_data['series'].median()
-        mean_series_2 = filtered_data_2['series'].mean()
-        return mean_series, median_series, mean_series_2, cumulative_sixty_day_consumption
+        return mean_series, median_series, cumulative_sixty_day_consumption
 
     
 def get_this_weeks_average(sensor_list):
@@ -192,13 +188,13 @@ with st.sidebar:
     
     # Timeseries chart
 if submitted == True:
-    mean, median, mean_two, cumulative_sixty_day_consumption = get_60_day_monday_average(sensor_list)
+    mean, median, cumulative_sixty_day_consumption = get_60_day_monday_average(sensor_list)
     seven_day_mean, cumulative_seven_day_consumption  = get_this_weeks_average(sensor_list)
     st.session_state.mean = mean
     st.session_state.median = median
     st.session_state.seven_day_mean = seven_day_mean
     st.session_state.mean_two = mean_two
-    st.session_state.suite_mean = (st.session_state.mean_two/amount_of_suites)
+    st.session_state.suite_mean = (st.session_state.mean/amount_of_suites)
     st.markdown(
         """
     <style>
