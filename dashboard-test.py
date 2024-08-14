@@ -54,6 +54,8 @@ def get_this_weeks_average(sensor_list):
         mean_series = cumulative_seven_day_consumption['series'].mean()
         return mean_series, cumulative_seven_day_consumption
 
+    
+
 
 def make_timeseries_chart(queried_sensors, start_date, end_date, rate, series):
     if len(queried_sensors) != 0:
@@ -79,9 +81,8 @@ def make_timeseries_chart(queried_sensors, start_date, end_date, rate, series):
         )
         # Generate the chart
         fig = px.bar(cumulative_timeseries_data, x="Datetime", y="series", height=500)
-        fig2 = px.scatter(cumulative_timeseries_data, x="Datetime", y="normalized", height=500, trendline="ols", trendline_scope="overall", trendline_color_override="#d52b1e")
-        fig2.update_layout(showlegend=False, font=dict(size=18))
-        fig2.update_layout(font=dict(size=18))
+        fig2 = px.scatter(cumulative_timeseries_data, x="Datetime", y="normalized", height=800, trendline="ols", trendline_scope="overall", trendline_color_override="#d52b1e")
+        fig2.update_layout(showlegend=False)
         st.plotly_chart(fig, theme="streamlit")
         st.plotly_chart(fig2, theme="streamlit")
         st.write(cumulative_timeseries_data)
@@ -134,9 +135,6 @@ with st.sidebar:
         font-size:30px !important;
         color: #122B46; 
     }
-    .kpi-font {
-        font-size:25px !important;
-        color: #ed0919; 
     </style>
     """, unsafe_allow_html=True)
 
@@ -181,48 +179,54 @@ with st.sidebar:
     for sensor_id, button in zip(sensor_list, buttons):
         if button == True:
             queried_sensors.append(sensor_id)        
+    # Get the selected suite numbers
+    amount_of_suites = df_selected_address["numberSuites"].iloc[0]
+    if not isinstance(amount_of_suites, (int, float)):
+        amount_of_suites = 1
     # Initiate Query and get list of dataframes from selected sensors
     submitted = st.button("Query")
-
-
-# Displays
-    # KPI's
-mean, median, cumulative_sixty_day_consumption = get_60_day_monday_average(sensor_list)
-seven_day_mean, cumulative_seven_day_consumption  = get_this_weeks_average(sensor_list)
-st.markdown(
-    """
-<style>
-[data-testid="stMetricValue"] {
-    font-size: 80px;
-}
-div[data-testid="stMarkdownContainer"] > p {
-    font-size: 25px;
-}
-
-
-</style>
-""",
-    unsafe_allow_html=True,
-)
-
-kpi1, kpi2, kpi3 = st.columns(3)
-kpi1.metric(
-    label="60 Day 1-5AM (Avg)",
-    value=round(mean)
-)
-kpi2.metric(
-    label="60 Day 1-5AM (Med)",
-    value=round(median)
-)
-kpi3.metric(
-    label="Past Weeks Avg (l/h)",
-    value = round(seven_day_mean)
-)
-
+    
     # Timeseries chart
 if submitted == True:
+    mean, median, cumulative_sixty_day_consumption = get_60_day_monday_average(sensor_list)
+    seven_day_mean, cumulative_seven_day_consumption  = get_this_weeks_average(sensor_list)
+    st.session_state.mean = mean
+    st.session_state.median = median
+    st.session_state.seven_day_mean = seven_day_mean
+    st.session_state.suite_mean = (st.session_state.seven_day_mean/amount_of_suites)
+    st.markdown(
+        """
+    <style>
+    [data-testid="stMetricValue"] {
+        font-size: 70px;
+    }
+    div[data-testid="stMarkdownContainer"] > p {
+        font-size: 25px;
+    }
+
+
+    </style>
+    """,
+        unsafe_allow_html=True,
+    )
+
+    kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+    kpi1.metric(
+        label="60 Day 1-5AM (Avg)",
+        value=round(st.session_state.mean)
+    )
+    kpi2.metric(
+        label="60 Day 1-5AM (Med)",
+        value=round(st.session_state.median)
+    )
+    kpi3.metric(
+        label="Past Weeks Avg (l/h)",
+        value = round(st.session_state.seven_day_mean)
+    )
+    kpi4.metric(
+        label="Per Suite Average (l/h)",
+        value = round(st.session_state.suite_mean)
+    )
     # Function to make timeseries chart  
     make_timeseries_chart(queried_sensors, start_date_unix, end_date_unix, rate, series)
-    
-
 
