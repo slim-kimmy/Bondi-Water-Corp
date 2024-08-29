@@ -9,7 +9,7 @@ import apitesting as at
 import alertlabAPI as al
 import plotly.express as px
 import streamlit_toggle as tog
-
+#import awsapi as aws
 
 ###########################################
 def get_60_day_monday_average(sensor_list):
@@ -55,11 +55,34 @@ def get_this_weeks_average(sensor_list):
         return mean_series, cumulative_seven_day_consumption
 
     
+def timeseries_bar_graph(dataframes):
+    # Prepare an empty DataFrame to concatenate all data
+    combined_df = pd.DataFrame()
+    # Loop over each DataFrame and map the correct sensor names
+    for idx, df in enumerate(dataframes):
+        df['Source'] = f"{sensor_names[idx]}"  # Fallback if sensor names are missing
+        combined_df = pd.concat([combined_df, df], ignore_index=True)
 
+    # Create a bar plot with different colors for each source file
+    fig = px.bar(combined_df, x='Datetime', y='series', color='Source', title="Total Litres Over Time", height=600)
+
+    # Customize hover template to include the total value for each datetime
+    fig.update_traces(hovertemplate='<b>Date:</b> %{x}<br>' +
+                                    '<b>Source:</b> %{customdata[0]}<br>' +
+                                    '<b>Value:</b> %{y}<br>' +
+                                    '<b>Total:</b> %{customdata[1]}<extra></extra>')
+
+    # Add custom data for hover: Source and Total
+    totals_df = combined_df.groupby('Datetime')['series'].sum().round(3).reset_index()
+    combined_df = combined_df.merge(totals_df, on='Datetime', suffixes=('', '_Total'))
+    fig.update_traces(customdata=combined_df[['Source', 'series_Total']].values)
+
+    return fig
 
 def make_timeseries_chart(queried_sensors, start_date, end_date, rate, series):
     if len(queried_sensors) != 0:
         time_series_data = al.get_list_timeseries(queried_sensors, start_date=start_date_unix, end_date=end_date_unix, rate=rate, series=series)
+        #timeseries_bar_graph(time_series_data)
         # Sum the displayed dataframes
         cumulative_timeseries_data = al.sum_columns(time_series_data, ['series'])
         # Casting data type for time as string
@@ -80,9 +103,9 @@ def make_timeseries_chart(queried_sensors, start_date, end_date, rate, series):
             lambda x: median_value if x < lower_bound or x > upper_bound else x
         )
         # Generate the chart
-        fig = px.bar(cumulative_timeseries_data, x="Datetime", y="series", height=500)
+        fig = timeseries_bar_graph(time_series_data)
         fig2 = px.scatter(cumulative_timeseries_data, x="Datetime", y="normalized", height=800, trendline="ols", trendline_scope="overall", trendline_color_override="#d52b1e")
-        fig2.update_layout(showlegend=False)
+        fig2.update_layout(showlegend=False)        
         st.plotly_chart(fig, theme="streamlit")
         st.plotly_chart(fig2, theme="streamlit")
         st.write(cumulative_timeseries_data)
@@ -111,8 +134,9 @@ authorization_header = st.session_state.authorization_header
 # Read in existing CSV, these will be swapped every refresh
 if 'df' not in st.session_state:
     # Load client list data
-    initial_load_dataframe = al.main()
+    #initial_load_dataframe = pd.DataFrame(aws.read_alertlabsProperties())
     # Load tombstone data from client list
+    initial_load_dataframe = al.main()
     initial_load_tombstone_dataframe = at.get_tombstone_data(initial_load_dataframe, authorization_header)
     initial_parent_id_dataframe = at.get_parents_ids(initial_load_dataframe, authorization_header)
     #######
@@ -193,7 +217,7 @@ if submitted == True:
     st.session_state.mean = mean
     st.session_state.median = median
     st.session_state.seven_day_mean = seven_day_mean
-    st.session_state.suite_mean = (st.session_state.mean/amount_of_suites)
+    st.session_state.suite_mean = (st.session_state.seven_day_mean/amount_of_suites)
     st.markdown(
         """
     <style>
