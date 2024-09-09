@@ -240,7 +240,7 @@ if submitted == True:
     )
     kpi2.metric(
         label="Ratio (Metric1, Metric3)",
-        value=round(st.session_state.median/st.session_state.seven_day_mean, 2)
+        value=round(st.session_state.seven_day_mean/st.session_state.median, 2)
     )
     kpi3.metric(
         label="Trailing 7 Day Average",
