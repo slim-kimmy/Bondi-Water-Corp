@@ -235,7 +235,7 @@ if submitted == True:
 
     kpi1, kpi2, kpi3, kpi4 = st.columns(4)
     kpi1.metric(
-        label="60 Day 1-5AM (Avg)",
+        label="60 Day 12AM-5AM (Avg)",
         value=round(st.session_state.mean)
     )
     kpi2.metric(
