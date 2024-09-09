@@ -9,7 +9,7 @@ import apitesting as at
 import alertlabAPI as al
 import plotly.express as px
 import streamlit_toggle as tog
-#import awsapi as aws
+
 
 ###########################################
 def get_60_day_monday_average(sensor_list):
@@ -134,9 +134,8 @@ authorization_header = st.session_state.authorization_header
 # Read in existing CSV, these will be swapped every refresh
 if 'df' not in st.session_state:
     # Load client list data
-    #initial_load_dataframe = pd.DataFrame(aws.read_alertlabsProperties())
-    # Load tombstone data from client list
     initial_load_dataframe = al.main()
+    # Load tombstone data from client list
     initial_load_tombstone_dataframe = at.get_tombstone_data(initial_load_dataframe, authorization_header)
     initial_parent_id_dataframe = at.get_parents_ids(initial_load_dataframe, authorization_header)
     #######
@@ -217,7 +216,7 @@ if submitted == True:
     st.session_state.mean = mean
     st.session_state.median = median
     st.session_state.seven_day_mean = seven_day_mean
-    st.session_state.suite_mean = (st.session_state.seven_day_mean/amount_of_suites)
+    st.session_state.suite_mean = (st.session_state.mean/amount_of_suites)
     st.markdown(
         """
     <style>
@@ -240,17 +239,21 @@ if submitted == True:
         value=round(st.session_state.mean)
     )
     kpi2.metric(
-        label="60 Day 1-5AM (Med)",
-        value=round(st.session_state.median)
+        label="Ratio (Metric1, Metric3)",
+        value=round(st.session_state.median/st.session_state.seven_day_mean, 2)
     )
     kpi3.metric(
-        label="Past Weeks Avg (l/h)",
+        label="Trailing 7 Day Average",
         value = round(st.session_state.seven_day_mean)
     )
     kpi4.metric(
-        label="Per Suite Average (l/h)",
+        label="Per Suite Average (l/h/u)",
         value = round(st.session_state.suite_mean)
     )
     # Function to make timeseries chart  
     make_timeseries_chart(queried_sensors, start_date_unix, end_date_unix, rate, series)
-
+    
+st.write("How KPI 1 is calculated: This is the 1-5 AM (inclusive) average for the past 60 days")
+st.write("How KPI 2 is calculated: This is the KPI1 divided by KPI3 and rounded to 2 decimals")
+st.write("How KPI 3 is calculated: This is the mean of the water measures (7 days * 24 hours)")
+st.write("How KPI 4 is calculated: This is KPI 1 divided by the number of suites")
