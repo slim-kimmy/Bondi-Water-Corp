@@ -239,7 +239,7 @@ if submitted == True:
         value=round(st.session_state.mean)
     )
     kpi2.metric(
-        label="Ratio (Metric1, Metric3)",
+        label="Continuity Ratio",
         value=round(st.session_state.seven_day_mean/st.session_state.median, 2)
     )
     kpi3.metric(
