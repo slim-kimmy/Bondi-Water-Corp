@@ -240,7 +240,7 @@ if submitted == True:
     )
     kpi2.metric(
         label="Continuity Ratio",
-        value=round(st.session_state.seven_day_mean/st.session_state.median, 2)
+        value=round(st.session_state.seven_day_mean/st.session_state.mean, 2)
     )
     kpi3.metric(
         label="Trailing 7 Day Average",
