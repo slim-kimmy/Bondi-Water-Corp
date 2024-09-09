@@ -254,6 +254,6 @@ if submitted == True:
     make_timeseries_chart(queried_sensors, start_date_unix, end_date_unix, rate, series)
     
 st.write("How KPI 1 is calculated: This is the 1-5 AM (inclusive) average for the past 60 days")
-st.write("How KPI 2 is calculated: This is the KPI1 divided by KPI3 and rounded to 2 decimals")
+st.write("How KPI 2 is calculated: This is the KPI3 divided by KPI1 and rounded to 2 decimals")
 st.write("How KPI 3 is calculated: This is the mean of the water measures (7 days * 24 hours)")
 st.write("How KPI 4 is calculated: This is KPI 1 divided by the number of suites")
