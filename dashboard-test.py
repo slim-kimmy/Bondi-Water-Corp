@@ -9,7 +9,6 @@ import apitesting as at
 import alertlabAPI as al
 import plotly.express as px
 import streamlit_toggle as tog
-import awsapi as aws
 
 
 
@@ -192,7 +191,7 @@ authorization_header = st.session_state.authorization_header
 # Read in existing CSV, these will be swapped every refresh
 if 'df' not in st.session_state:
     # Load client list data
-    initial_load_dataframe = pd.DataFrame(aws.read())
+    initial_load_dataframe = al.main()
     # Load tombstone data from client list
     initial_load_tombstone_dataframe = at.get_tombstone_data(initial_load_dataframe, authorization_header)
     initial_parent_id_dataframe = at.get_parents_ids(initial_load_dataframe, authorization_header)
