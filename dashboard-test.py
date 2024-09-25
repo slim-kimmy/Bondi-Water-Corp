@@ -9,9 +9,10 @@ import apitesting as at
 import alertlabAPI as al
 import plotly.express as px
 import streamlit_toggle as tog
+import awsapi as aws
 
 
-###########################################
+
 def get_60_day_monday_average(sensor_list):
     if len(sensor_list) > 0:
         # Get today's date and convert to unix time
@@ -27,8 +28,7 @@ def get_60_day_monday_average(sensor_list):
         # Convert the datetime strings into Datetime objects and adjust for UTC to EDT
         cumulative_sixty_day_consumption['Datetime'] = pd.to_datetime(cumulative_sixty_day_consumption['Datetime'])
         # Filter the data for Datetime values that are Mondays between 1AM and 5AM EDT
-        filtered_data = cumulative_sixty_day_consumption[#(cumulative_sixty_day_consumption['Datetime'].dt.dayofweek == 0) &
-                                                         (cumulative_sixty_day_consumption['Datetime'].dt.hour >= 1) &
+        filtered_data = cumulative_sixty_day_consumption[(cumulative_sixty_day_consumption['Datetime'].dt.hour >= 1) &
                                                          (cumulative_sixty_day_consumption['Datetime'].dt.hour <= 5)]
         # Calculate the mean and median of the series column for the filtered data
         mean_series = filtered_data['series'].mean()
@@ -36,6 +36,7 @@ def get_60_day_monday_average(sensor_list):
         return mean_series, median_series, cumulative_sixty_day_consumption
 
     
+
 def get_this_weeks_average(sensor_list):
     if len(sensor_list) > 0:
         # Get today's date and convert to unix time
@@ -54,7 +55,62 @@ def get_this_weeks_average(sensor_list):
         mean_series = cumulative_seven_day_consumption['series'].mean()
         return mean_series, cumulative_seven_day_consumption
 
-    
+
+
+def generate_heatmap(sensor_list):
+    if len(sensor_list) > 0:
+        # Calculate the Unix timestamps for the start of last week (Monday) to the end of Sunday
+        today = datetime.now()
+        last_sunday = today - timedelta(days=today.weekday() + 1)
+        start_of_last_week = last_sunday - timedelta(days=6)
+        start_of_last_week_unix = int(time.mktime(start_of_last_week.replace(hour=0, minute=0, second=0, microsecond=0).timetuple()))
+        end_of_last_week_unix = int(time.mktime(last_sunday.replace(hour=23, minute=59, second=59, microsecond=0).timetuple()))
+
+        # Fetch the data for the entire last week
+        seven_day_dataframes = al.get_list_timeseries(
+            sensor_list, 
+            start_date=start_of_last_week_unix, 
+            end_date=end_of_last_week_unix, 
+            rate="h", 
+            series="water"
+        )
+        cumulative_seven_day_consumption = al.sum_columns(seven_day_dataframes, ['series'])
+        cumulative_seven_day_consumption['Datetime'] = pd.to_datetime(cumulative_seven_day_consumption['Datetime'], unit='s')
+        cumulative_seven_day_consumption['Day'] = cumulative_seven_day_consumption['Datetime'].dt.day_name()
+        cumulative_seven_day_consumption['Hour'] = cumulative_seven_day_consumption['Datetime'].dt.hour
+        day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        cumulative_seven_day_consumption['Day'] = pd.Categorical(cumulative_seven_day_consumption['Day'], categories=day_order, ordered=True)
+        cumulative_seven_day_consumption['Litres'] = cumulative_seven_day_consumption['series'].round(2)
+        start_last_display = start_of_last_week.strftime('%m/%d/%Y')
+        last_sunday_display = last_sunday.strftime('%m/%d/%Y')
+
+
+            # Custom colors for a more engaging look
+        custom_colors = alt.Scale(
+        scheme='blues', 
+        domainMid=0,
+        range=['#f7fbff', '#6baed6', '#08306b']
+        )
+        fig = alt.Chart(cumulative_seven_day_consumption).mark_rect().encode(
+            x=alt.X('Hour:O', title='Hour of the Day'),
+            y=alt.Y('Day:O', title='Day of the Week', sort=day_order),
+            color=alt.Color('Litres:Q', scale=alt.Scale(scheme='blues'), title="L's Usage"),
+            tooltip=['Day', 'Hour', 'Litres']
+        ).properties(
+            title=f"L's Usage Heatmap: Hourly Distribution Across Last Week ({start_last_display} - {last_sunday_display})",
+            width=700,
+            height=700
+        ).configure_axis(
+            grid=False
+        ).configure_view(
+            strokeWidth=0
+        ).configure_mark(
+            fontSize=32  # Adjust this to increase the size of hover text globally
+        )
+        return fig
+
+
+
 def timeseries_bar_graph(dataframes):
     # Prepare an empty DataFrame to concatenate all data
     combined_df = pd.DataFrame()
@@ -78,6 +134,8 @@ def timeseries_bar_graph(dataframes):
     fig.update_traces(customdata=combined_df[['Source', 'series_Total']].values)
 
     return fig
+
+
 
 def make_timeseries_chart(queried_sensors, start_date, end_date, rate, series):
     if len(queried_sensors) != 0:
@@ -104,15 +162,15 @@ def make_timeseries_chart(queried_sensors, start_date, end_date, rate, series):
         )
         # Generate the chart
         fig = timeseries_bar_graph(time_series_data)
-        fig2 = px.scatter(cumulative_timeseries_data, x="Datetime", y="normalized", height=800, trendline="ols", trendline_scope="overall", trendline_color_override="#d52b1e")
-        fig2.update_layout(showlegend=False)        
+        fig2 = px.scatter(cumulative_timeseries_data, x="Datetime", y="normalized", height=700, trendline="ols", trendline_scope="overall", trendline_color_override="#d52b1e")
+        fig2.update_layout(showlegend=False)   
+        fig3 = generate_heatmap(queried_sensors)     
         st.plotly_chart(fig, theme="streamlit")
         st.plotly_chart(fig2, theme="streamlit")
+        st.altair_chart(fig3, theme="streamlit", use_container_width=True)
         st.write(cumulative_timeseries_data)
+        
 
-def get_location_dataframes(location_id):
-    pass
-###########################################
 # Settings
 st.set_page_config(
     page_title="Bondi Water Corp",
@@ -134,7 +192,7 @@ authorization_header = st.session_state.authorization_header
 # Read in existing CSV, these will be swapped every refresh
 if 'df' not in st.session_state:
     # Load client list data
-    initial_load_dataframe = al.main()
+    initial_load_dataframe = pd.DataFrame(aws.read())
     # Load tombstone data from client list
     initial_load_tombstone_dataframe = at.get_tombstone_data(initial_load_dataframe, authorization_header)
     initial_parent_id_dataframe = at.get_parents_ids(initial_load_dataframe, authorization_header)
@@ -239,8 +297,8 @@ if submitted == True:
         value=round(st.session_state.mean)
     )
     kpi2.metric(
-        label="Continuity Ratio",
-        value=round(st.session_state.seven_day_mean/st.session_state.mean, 2)
+        label="Ratio (Metric1, Metric3)",
+        value=round(st.session_state.median/st.session_state.seven_day_mean, 2)
     )
     kpi3.metric(
         label="Trailing 7 Day Average",
@@ -254,6 +312,6 @@ if submitted == True:
     make_timeseries_chart(queried_sensors, start_date_unix, end_date_unix, rate, series)
     
 st.write("How KPI 1 is calculated: This is the 1-5 AM (inclusive) average for the past 60 days")
-st.write("How KPI 2 is calculated: This is the KPI3 divided by KPI1 and rounded to 2 decimals")
+st.write("How KPI 2 is calculated: This is the KPI1 divided by KPI3 and rounded to 2 decimals")
 st.write("How KPI 3 is calculated: This is the mean of the water measures (7 days * 24 hours)")
 st.write("How KPI 4 is calculated: This is KPI 1 divided by the number of suites")
