@@ -147,7 +147,7 @@ COMPARISON_API = 'https://www.alertlabsdashboard.com/api/v2/aggregates/compariso
 # Handle token exchange token to get new access token
 def generate_new_authorization_header():
     response = requests.post(LOGIN_API, json={
-        "user": "ethank007@hotmail.com",
+        "user": "ethan.kim@water-controls.com",
         "password": "Kimmy2002"
     })
     login_response = json.loads(response.text)
