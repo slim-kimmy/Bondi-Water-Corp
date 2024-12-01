@@ -18,8 +18,8 @@ Description: Uses alertlabs login details to return an authorization header for 
 # Handle token exchange token to get new access token
 def generate_new_authorization_header():
     response = requests.post(LOGIN_API, json={
-        "user": "ethank007@hotmail.com",
-        "password": "BigBunny240"
+        "user": "ethan.kim@water-controls.com",
+        "password": "Kimmy2002"
     })
     login_response = json.loads(response.text)
     if login_response['success'] == False:
